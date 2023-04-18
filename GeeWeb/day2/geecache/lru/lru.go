@@ -32,7 +32,7 @@ func New(maxBytes int64, onEvicted func(string, Value)) *Cache {
 	}
 }
 
-// 新增/更新
+// Add 新增/更新
 func (c *Cache) Add(key string, value Value) {
 	if ele, ok := c.cache[key]; ok { // 更新
 		c.ll.MoveToFront(ele)
