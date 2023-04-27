@@ -1,7 +1,8 @@
-package session
+package test
 
 import (
 	"geeorm/log"
+	"geeorm/session"
 	"testing"
 )
 
@@ -11,13 +12,13 @@ type Account struct {
 	Password string
 }
 
-func (account *Account) BeforeInsert(s *Session) error {
+func (account *Account) BeforeInsert(s *session.Session) error {
 	log.Info("before insert", account)
 	account.Id += 100
 	return nil
 }
 
-func (account *Account) AfterQuery(s *Session) error {
+func (account *Account) AfterQuery(s *session.Session) error {
 	log.Info("after query", account)
 	account.Password = "*****"
 	return nil

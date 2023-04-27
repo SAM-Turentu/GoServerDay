@@ -1,8 +1,9 @@
-package session
+package test
 
 import (
 	"database/sql"
 	"geeorm/dialect"
+	"geeorm/session"
 	_ "github.com/mattn/go-sqlite3"
 	"os"
 	"testing"
@@ -22,8 +23,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func NewSession() *Session {
-	return New(TestDB, TestDial)
+func NewSession() *session.Session {
+	return session.New(TestDB, TestDial)
 }
 
 func TestSession_Exec(t *testing.T) {

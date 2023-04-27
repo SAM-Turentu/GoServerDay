@@ -1,7 +1,7 @@
-package schema
+package test
 
 import (
-	"geeorm/dialect"
+	schema2 "geeorm/schema"
 	"testing"
 )
 
@@ -10,10 +10,10 @@ type User struct {
 	Age  int
 }
 
-var TestDial, _ = dialect.GetDialect("sqlite3")
+//var TestDial, _ = dialect.GetDialect("sqlite3")
 
 func TestParse(t *testing.T) {
-	schema := Parse(&User{}, TestDial)
+	schema := schema2.Parse(&User{}, TestDial)
 	if schema.Name != "User" || len(schema.Fields) != 2 {
 		t.Fatal("failed to parse User struct")
 	}

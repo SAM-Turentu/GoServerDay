@@ -1,6 +1,9 @@
-package session
+package test
 
-import "testing"
+import (
+	"geeorm/session"
+	"testing"
+)
 
 type UserInfo struct {
 	Name string `geeorm:"PRIMARY KEY"`
@@ -14,7 +17,7 @@ var (
 )
 
 // testRecordInit 初始化表及数据
-func testRecordInit(t *testing.T) *Session {
+func testRecordInit(t *testing.T) *session.Session {
 	t.Helper()
 	s := NewSession().Model(&UserInfo{})
 	err1 := s.DropTable()
