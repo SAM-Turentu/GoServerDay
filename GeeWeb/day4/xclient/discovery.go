@@ -2,8 +2,11 @@ package xclient
 
 import (
 	"errors"
+	"log"
 	"math"
 	"math/rand"
+	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,8 +35,8 @@ type MultiServersDiscovery struct {
 	index   int // 记录算法已经轮训到的位置
 }
 
-// MewMultiServerDiscovery 创建一个 MultiServersDiscovery 实例
-func MewMultiServerDiscovery(servers []string) *MultiServersDiscovery {
+// NewMultiServerDiscovery 创建一个 MultiServersDiscovery 实例
+func NewMultiServerDiscovery(servers []string) *MultiServersDiscovery {
 	d := &MultiServersDiscovery{
 		servers: servers,
 		r:       rand.New(rand.NewSource(time.Now().UnixNano())),
@@ -49,6 +52,30 @@ func (d *MultiServersDiscovery) Refresh() error {
 	return nil
 }
 
+// Refresh 从注册中心更新服务列表
+func (d *GeeRegistryDiscovery) Refresh() error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.lastUpdate.Add(d.timeout).After(time.Now()) {
+		return nil
+	}
+	log.Println("rpc registry: refresh servers from registry", d.registry)
+	resp, err := http.Get(d.registry)
+	if err != nil {
+		log.Println("rpc registry refresh err:", err)
+		return err
+	}
+	severs := strings.Split(resp.Header.Get("X-Geerpc-Servers"), ",")
+	d.servers = make([]string, 0, len(severs))
+	for _, sever := range severs {
+		if strings.TrimSpace(sever) != "" {
+			d.servers = append(d.servers, strings.TrimSpace(sever))
+		}
+	}
+	d.lastUpdate = time.Now()
+	return nil
+}
+
 // Update 手动更新
 func (d *MultiServersDiscovery) Update(servers []string) error {
 	d.mu.Lock()
@@ -57,7 +84,16 @@ func (d *MultiServersDiscovery) Update(servers []string) error {
 	return nil
 }
 
-// Get 根据负载均衡策略，选择一个服务实例
+// Update 手动更新;
+func (d *GeeRegistryDiscovery) Update(servers []string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.servers = servers
+	d.lastUpdate = time.Now()
+	return nil
+}
+
+// Get_v1 根据负载均衡策略，选择一个服务实例
 func (d *MultiServersDiscovery) Get(mode SelectMode) (string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -78,6 +114,13 @@ func (d *MultiServersDiscovery) Get(mode SelectMode) (string, error) {
 	}
 }
 
+func (d *GeeRegistryDiscovery) Get(mode SelectMode) (string, error) {
+	if err := d.Refresh(); err != nil {
+		return "", err
+	}
+	return d.MultiServersDiscovery.Get(mode)
+}
+
 // GetAll 返回所有服务实例
 func (d *MultiServersDiscovery) GetAll() ([]string, error) {
 	d.mu.Lock()
@@ -86,4 +129,11 @@ func (d *MultiServersDiscovery) GetAll() ([]string, error) {
 	servers := make([]string, len(d.servers), len(d.servers))
 	copy(servers, d.servers)
 	return servers, nil
+}
+
+func (d *GeeRegistryDiscovery) GetAll() ([]string, error) {
+	if err := d.Refresh(); err != nil {
+		return nil, err
+	}
+	return d.MultiServersDiscovery.GetAll()
 }
