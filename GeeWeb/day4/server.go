@@ -297,8 +297,14 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	server.ServerConn(conn)
 }
 
+func (server *Server) HandleHTTP_v1() {
+	http.Handle(defalutRPCPath, server)
+}
+
 func (server *Server) HandleHTTP() {
 	http.Handle(defalutRPCPath, server)
+	http.Handle(defalutDebugPath, debugHTTP{server})
+	log.Println("rpc server debug path: ", defalutDebugPath)
 }
 
 func HandleHTTP() {
