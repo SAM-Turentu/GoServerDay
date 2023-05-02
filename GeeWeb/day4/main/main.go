@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"geerpc"
 	"geerpc/registry"
 	"geerpc/xclient"
 	"log"
 	"net"
 	"net/http"
+	"os"
+	"runtime/pprof"
 	"sync"
 	"time"
 )
@@ -291,6 +294,10 @@ func broadcast(registry string) {
 }
 
 func main() {
+	f, _ := os.OpenFile("cpu.pprof", os.O_CREATE|os.O_RDWR, 0644)
+	defer f.Close()
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 	log.SetFlags(0)
 	registryAddr := "http://localhost:9999/_rpc_/registry"
 	var wg sync.WaitGroup
